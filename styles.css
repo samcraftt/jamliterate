@@ -1,11 +1,13 @@
 body {
-  background-color:"BlanchedAlmond";
+  background-color: BlanchedAlmond;
 }
+
 h1 {
-  color:"DarkBlue";
-  align:"centered";
+  color: DarkBlue;
+  text-align: center;
 }
+
 p {
-  color:"DarkBlue";
-  align:"centered";
+  color: DarkBlue;
+  text-align: center;
 }
