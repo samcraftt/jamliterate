@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}View Jampack{% endblock %}
+{% block extra_css %}
+<style>
+    .flashcard {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+        position: relative;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        perspective: 1000px;
+        cursor: pointer;
+    }
+    .flashcard-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+    }
+    .flashcard.flipped .flashcard-inner {
+        transform: rotateY(180deg);
+    }
+    .question, .answer {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 18px;
+    }
+    .answer {
+        transform: rotateY(180deg);
+    }
+    #previous-button, #next-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: var(--teal);
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .btn-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px; /* Adjust gap as needed */
+    }
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+    }
+    .left-actions, .right-actions {
+        display: flex;
+        gap: 10px; /* Adjust gap as needed */
+    }
+    .right-actions {
+        margin-left: auto; /* Pushes the right-actions to the right */
+    }
+    .star-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: gold;
+    }
+</style>
+{% endblock %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<h1>{{ study_set.title }}</h1>
+<div class="controls">
+    <form action="{{ url_for('study_set', set_id=study_set.id) }}" method="GET">
+        <label for="shuffle">
+            <input type="checkbox" id="shuffle" name="shuffle" value="true" {% if shuffle %}checked{% endif %} onchange="this.form.submit()">
+            Shuffle Cards
+        </label>
+        <label for="starred_only">
+            <input type="checkbox" id="starred_only" name="starred_only" value="true" {% if starred_only %}checked{% endif %} onchange="this.form.submit()">
+            Starred Cards Only
+        </label>
+        <label for="flip_cards">
+            <input type="checkbox" id="flip_cards" name="flip_cards" value="true" {% if flip_cards %}checked{% endif %} onchange="this.form.submit()">
+            Flip Cards
+        </label>
+    </form>
+    <span>Card <span id="current-card">1</span> of {{ cards|length }}</span>
+</div>
+<div id="flashcard-container">
+    {% for card in cards %}
+    <div class="flashcard" data-card-id="{{ card.id }}" {% if not loop.first %}style="display: none;" {% endif %}>
+        <div class="flashcard-inner">
+            <div class="question">{{ card.question if not flip_cards else card.answer }}</div>
+            <div class="answer">{{ card.answer if not flip_cards else card.question }}</div>
+        </div>
+        <button class="star-btn" onclick="starCard({{ card.id }})">
+            {% if card.starred %}★{% else %}☆{% endif %}
+        </button>
+    </div>
+    {% endfor %}
+</div>
+<div class="btn-container">
+    <button id="previous-button" class="btn"> < </button>
+    <button id="next-button" class="btn"> > </button>
+</div>
+<div class="actions" style="margin-top: 30px;">
+    <div class="left-actions">
+        <a href="{{ url_for('add_card', set_id=study_set.id) }}" class="btn">Add Card(s)</a>
+        <a href="{{ url_for('edit_card', set_id=study_set.id) }}" class="btn" id="edit-card-btn">Edit Current Card</a>
+        <a href="{{ url_for('delete_card', set_id=study_set.id) }}" style="background-color: #ff4136;" class="btn" id="delete-card-btn">Delete Current Card</a>
+    </div>
+    <div class="right-actions">
+        <a href="{{ url_for('rapid_review', set_id=study_set.id) }}" class="btn">Rapid Review</a>
+    </div>
+</div>
+<hr>
+<h3>Manage Jampack</h3>
+<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}" style="margin-bottom: 10px;">
+    <input type="hidden" name="_method" value="PUT">
+    <input type="text" name="title" placeholder="New title" value="{{ study_set.title }}">
+    <button type="submit" class="btn">Update Title</button>
+</form>
+<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}" style="margin-bottom: 10px;">
+    <input type="hidden" name="_method" value="DELETE">
+    <button type="submit" class="btn" style="background-color: #ff4136;">Delete Jampack</button>
+</form>
+<hr>
+<h3>Share Jampack</h3>
+<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}">
+    <input type="hidden" name="_method" value="SHARE">
+    <input type="text" name="email" placeholder="Recipient's Email">
+    <button type="submit" class="btn">Share</button>
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+    let currentCard = 0;
+    const cards = document.querySelectorAll('.flashcard');
+    const currentCardSpan = document.getElementById('current-card');
+    const editCardBtn = document.getElementById('edit-card-btn');
+    const deleteCardBtn = document.getElementById('delete-card-btn');
+    const setId = {{ study_set.id }};
+
+    function updateLinks() {
+        const cardId = cards[currentCard].dataset.cardId;
+        const newEditHref = `{{ url_for('edit_card', set_id=study_set.id) }}/${cardId}`;
+        editCardBtn.href = newEditHref;
+
+        const newDeleteHref = `{{ url_for('delete_card', set_id=study_set.id) }}/${cardId}`;
+        deleteCardBtn.href = newDeleteHref;
+    }
+
+    function starCard(cardId) {
+        fetch(`/jampacks/{{ study_set.id }}/star_card/${cardId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const starBtn = document.querySelector(`.flashcard[data-card-id="${cardId}"] .star-btn`);
+                starBtn.textContent = data.starred ? '★' : '☆';
+            }
+        });
+    }
+
+    function flipCard(card) {
+        card.classList.toggle('flipped');
+    }
+
+    function nextCard() {
+        cards[currentCard].style.display = 'none';
+        currentCard = (currentCard + 1) % cards.length;
+        cards[currentCard].style.display = 'block';
+        cards[currentCard].classList.remove('flipped');
+        currentCardSpan.textContent = currentCard + 1;
+        updateLinks();
+    }
+
+    function previousCard() {
+        cards[currentCard].style.display = 'none';
+        currentCard = (currentCard - 1 + cards.length) % cards.length;
+        cards[currentCard].style.display = 'block';
+        cards[currentCard].classList.remove('flipped');
+        currentCardSpan.textContent = currentCard + 1;
+        updateLinks();
+    }
+
+    document.querySelectorAll('.flashcard').forEach(card => {
+        card.addEventListener('click', () => flipCard(card));
+    });
+
+    document.getElementById('next-button').addEventListener('click', nextCard);
+    document.getElementById('previous-button').addEventListener('click', previousCard);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'ArrowUp') {
+            flipCard(cards[currentCard]);
+        } else if (e.code === 'ArrowRight') {
+            nextCard();
+        } else if (e.code === 'ArrowLeft') {
+            previousCard();
+        }
+    });
+
+    updateLinks();
+
+</script>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Add Card{% endblock %}
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--blue);
+        font-weight: bold;
+    }
+    textarea, input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        resize: vertical;
+        box-sizing: border-box;
+    }
+    .submit-btn {
+        background-color: var(--teal);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .submit-btn:hover {
+        background-color: var(--blue);
+    }
+    .tab {
+        overflow: hidden;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f1f1f1;
+    }
+    .tab button {
+        background-color: transparent;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 16px;
+        border-bottom: 2px solid transparent;
+        margin-right: 10px;
+    }
+    .tab button:hover {
+        background-color: #f9f9f9;
+    }
+    .tab button.active {
+        border-bottom: 2px solid var(--teal);
+        color: var(--teal);
+    }
+    .tabcontent {
+        display: none;
+        padding: 20px 0;
+    }
+    #loading-message {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 20px;
+        text-align: center;
+        font-weight: bold;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Add Card to {{ study_set.title }}</h1>
+
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual Entry</button>
+        <button class="tablinks" onclick="openTab(event, 'AI')">Jampack Generator</button>
+    </div>
+
+    <div id="Manual" class="tabcontent">
+        <form method="POST">
+            <div class="form-group">
+                <label for="question">Question:</label>
+                <textarea id="question" name="question" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="answer">Answer:</label>
+                <textarea id="answer" name="answer" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Add Card</button>
+        </form>
+    </div>
+
+    <div id="AI" class="tabcontent">
+        <form method="POST" id="ai-form">
+            <div class="form-group">
+                <label for="text">Text:</label>
+                <textarea id="text" name="text" rows="10" required maxlength="20000"></textarea>
+                <p id="char-count">0 / 20,000 characters</p>
+            </div>
+            <div class="form-group">
+                <label for="num_cards">Number of cards to add (max = 35):</label>
+                <input type="number" id="num_cards" name="num_cards" min="1" max="35" value="10" required>
+            </div>
+            <button type="submit" name="generate" value="true" class="submit-btn">Generate Cards</button>
+        </form>
+        <div id="loading-message" style="display: none;">
+            <p>Adding cards... This may take a moment.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.className += " active";
+}
+
+document.getElementById("defaultOpen").click();
+
+document.addEventListener('DOMContentLoaded', function() {
+    var textArea = document.getElementById('text');
+    var charCount = document.getElementById('char-count');
+    var aiForm = document.getElementById('ai-form');
+    var loadingMessage = document.getElementById('loading-message');
+
+    textArea.addEventListener('input', function() {
+        var remainingChars = 20000 - this.value.length;
+        charCount.textContent = this.value.length + ' / 20,000 characters';
+        if (remainingChars < 0) {
+            charCount.style.color = 'red';
+        } else {
+            charCount.style.color = 'initial';
+        }
+    });
+
+    // Add this event listener for the AI form submission
+    aiForm.addEventListener('submit', function(e) {
+        if (textArea.value.length > 20000) {
+            e.preventDefault();
+            alert('Text must be 20,000 characters or less.');
+        } else {
+            loadingMessage.style.display = 'block';
+            aiForm.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

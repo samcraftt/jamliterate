@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Create Jampack{% endblock %}
+{% block extra_css %}
+<style>
+    .create-set-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--blue);
+    }
+    input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .submit-btn {
+        background-color: var(--teal);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .submit-btn:hover {
+        background-color: var(--blue);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="create-set-container">
+    <h1>Create New Jampack</h1>
+    <form action="{{ url_for('create_jampack') }}" method="post">
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <button type="submit" class="submit-btn">Create Jampack</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Edit Card{% endblock %}
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--blue);
+    }
+    textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        resize: vertical;
+    }
+    .submit-btn {
+        background-color: var(--teal);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .submit-btn:hover {
+        background-color: var(--blue);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h1>Edit Card in {{ study_set.title }}</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="question">Question:</label>
+            <textarea id="question" name="question" rows="4" required>{{ card.question }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="answer">Answer:</label>
+            <textarea id="answer" name="answer" rows="4" required>{{ card.answer }}</textarea>
+        </div>
+        <button type="submit" class="submit-btn">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

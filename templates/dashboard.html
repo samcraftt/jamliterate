@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+    .study-sets {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .study-set {
+        background-color: white;
+        border-radius: 5px;
+        padding: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .study-set:hover {
+        transform: translateY(-5px);
+    }
+    .study-set a {
+        color: var(--blue);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .actions {
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<h1>Welcome, {{ user.name }}!</h1>
+<h2>Your Jampacks</h2>
+<div class="study-sets">
+    {% for set in study_sets %}
+    <div class="study-set">
+        <a href="{{ url_for('study_set', set_id=set.id) }}">{{ set.title }}</a>
+    </div>
+    {% endfor %}
+</div>
+<div class="actions">
+    <a href="{{ url_for('create_jampack') }}" class="btn">Create New Jampack</a>
+    <a href="{{ url_for('jampack_generator') }}" class="btn" style="margin-left: 10px;">Jampack Generator</a>
+</div>
+{% endblock %}
