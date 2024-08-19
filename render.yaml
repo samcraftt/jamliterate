@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: Jamliterate
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:10000 main:app
