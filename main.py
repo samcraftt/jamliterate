@@ -8,6 +8,9 @@ from database import db
 from models import User, StudySet, FlashCard
 import random
 import openai
+import json
+
+client_secrets = json.loads(os.getenv("CLIENT_SECRETS_JSON"))
 
 # Start up the app with Flask and SQLAlchemy
 app = Flask(__name__)
