@@ -10,7 +10,6 @@ from supabase import create_client, Client
 
 client_secrets = json.loads(os.getenv("CLIENT_SECRETS_JSON"))
 
-# Start up the app with Flask and SQLAlchemy
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 openai.api_key = os.environ.get('OPENAI_API_KEY')
@@ -75,7 +74,7 @@ def callback():
         }
         response = supabase.table('users').insert(user).execute()
         user = response.data[0]
-    session['user_id'] = user.id
+    session['user_id'] = user['id']
     return redirect(url_for('dashboard'))
 
 @app.route('/dashboard')
@@ -84,7 +83,7 @@ def dashboard():
     if not user_id:
         return redirect(url_for('home'))
     user_response = supabase.table('users').select('*').eq('id', user_id).execute()
-    user = user_response.data[0] if user_response.data else None  
+    user = user_response.data[0] if user_response.data else None
     study_sets_response = supabase.table('study_sets').select('*').eq('user_id', user_id).execute()
     study_sets = study_sets_response.data
     return render_template('dashboard.html', user=user, study_sets=study_sets)
@@ -104,7 +103,7 @@ def create_jampack():
         new_set = {
             'title': title,
             'user_id': user_id
-        }        
+        }
         supabase.table('study_sets').insert(new_set).execute()
         return redirect(url_for('dashboard'))
     return render_template('create_jampack.html')
@@ -161,8 +160,7 @@ def study_set(set_id):
         cards = [card for card in cards if card['starred']]
     if shuffle:
         cards = random.sample(cards, len(cards))
-    return render_template('study_set.html', study_set=this_set, cards=cards, shuffle=shuffle,
-                           starred_only=starred_only, flip_cards=flip_cards)
+    return render_template('study_set.html', study_set=this_set, cards=cards, shuffle=shuffle, starred_only=starred_only, flip_cards=flip_cards)
 
 @app.route('/jampacks/<int:set_id>/add_card', methods=['GET', 'POST'])
 def add_card(set_id):
@@ -370,6 +368,8 @@ def rapid_review(set_id):
         return redirect(url_for('home'))
     this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
     this_set = this_set_response.data[0] if this_set_response.data else None
+    cards_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).execute()
+    cards = cards_response.data
     if request.method == 'POST':
         text = "Analyst the following text and generate flashcards.\nShorten this flashcard set to "
         text += str(request.form.get('text'))
@@ -379,9 +379,9 @@ def rapid_review(set_id):
         cards_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).execute()
         cards = cards_response.data
         for card in cards:
-            text += card.question
+            text += card['question']
             text += ":"
-            text += card.answer
+            text += card['answer']
             text += "\n"
         text += "\n"
         try:
@@ -405,7 +405,7 @@ def rapid_review(set_id):
             return redirect(url_for('dashboard'))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    return render_template('rapid_review.html', study_set=this_set)
+    return render_template('rapid_review.html', study_set=this_set, cards=cards)
 
 @app.route('/jampacks/<int:set_id>/edit_card/', defaults={'card_id': None})
 @app.route('/jampacks/<int:set_id>/edit_card/<int:card_id>', methods=['GET', 'POST'])
@@ -422,8 +422,7 @@ def edit_card(set_id, card_id):
         this_card_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).limit(1).execute()
     else:
         this_card_response = supabase.table('flash_cards').select('*').eq('id', card_id).eq('study_set_id', set_id).execute()
-    
-    this_card = this_card_response.data[0] if this_card_response.data else None
+        this_card = this_card_response.data[0] if this_card_response.data else None
     if not this_card:
         flash('No card to edit.', 'error')
         return redirect(url_for('study_set', set_id=set_id))
@@ -464,4 +463,4 @@ def star_card(set_id, card_id):
         return jsonify({'error': 'Card not found'}), 404
     card['starred'] = not card.get('starred', False)
     supabase.table('flash_cards').update({'starred': card['starred']}).eq('id', card_id).execute()
-    return jsonify({'success': True, 'starred': card.starred})
+    return jsonify({'success': True, 'starred': card['starred']})
