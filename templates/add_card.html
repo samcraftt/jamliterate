@@ -79,16 +79,13 @@
     }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="form-container">
     <h1>Add Card to {{ study_set.title }}</h1>
-
     <div class="tab">
         <button class="tablinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual Entry</button>
         <button class="tablinks" onclick="openTab(event, 'AI')">Jampack Generator</button>
     </div>
-
     <div id="Manual" class="tabcontent">
         <form method="POST">
             <div class="form-group">
@@ -102,7 +99,6 @@
             <button type="submit" class="submit-btn">Add Card</button>
         </form>
     </div>
-
     <div id="AI" class="tabcontent">
         <form method="POST" id="ai-form">
             <div class="form-group">
@@ -122,7 +118,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 function openTab(evt, tabName) {
@@ -138,15 +133,12 @@ function openTab(evt, tabName) {
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
 }
-
 document.getElementById("defaultOpen").click();
-
 document.addEventListener('DOMContentLoaded', function() {
     var textArea = document.getElementById('text');
     var charCount = document.getElementById('char-count');
     var aiForm = document.getElementById('ai-form');
     var loadingMessage = document.getElementById('loading-message');
-
     textArea.addEventListener('input', function() {
         var remainingChars = 20000 - this.value.length;
         charCount.textContent = this.value.length + ' / 20,000 characters';
@@ -156,8 +148,6 @@ document.addEventListener('DOMContentLoaded', function() {
             charCount.style.color = 'initial';
         }
     });
-
-    // Add this event listener for the AI form submission
     aiForm.addEventListener('submit', function(e) {
         if (textArea.value.length > 20000) {
             e.preventDefault();
