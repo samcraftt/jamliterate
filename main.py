@@ -3,27 +3,23 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from google_auth_oauthlib.flow import Flow
 import os
-from flask_migrate import Migrate
-from database import db
-from models import User, StudySet, FlashCard
 import random
 import openai
 import json
+from supabase import create_client, Client
 
 client_secrets = json.loads(os.getenv("CLIENT_SECRETS_JSON"))
 
 # Start up the app with Flask and SQLAlchemy
 app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 openai.api_key = os.environ.get('OPENAI_API_KEY')
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-db.init_app(app)
-
-migrate = Migrate(app, db)
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
 
 @app.route('/favicon.png')
 def favicon():
@@ -69,15 +65,16 @@ def callback():
         request=google_requests.Request(),
         audience=GOOGLE_CLIENT_ID
     )
-    user = User.query.filter_by(google_id=id_info['sub']).first()
+    response = supabase.table('users').select('*').eq('google_id', id_info['sub']).execute()
+    user = response.data[0] if response.data else None
     if not user:
-        user = User(
-            google_id=id_info['sub'],
-            email=id_info['email'],
-            name=id_info['name']
-        )
-        db.session.add(user)
-        db.session.commit()
+        user = {
+            'google_id': id_info['sub'],
+            'email': id_info['email'],
+            'name': id_info['name']
+        }
+        response = supabase.table('users').insert(user).execute()
+        user = response.data[0]
     session['user_id'] = user.id
     return redirect(url_for('dashboard'))
 
@@ -86,8 +83,10 @@ def dashboard():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    user = User.query.get(user_id)
-    study_sets = StudySet.query.filter_by(user_id=user_id).all()
+    user_response = supabase.table('users').select('*').eq('id', user_id).execute()
+    user = user_response.data[0] if user_response.data else None  
+    study_sets_response = supabase.table('study_sets').select('*').eq('user_id', user_id).execute()
+    study_sets = study_sets_response.data
     return render_template('dashboard.html', user=user, study_sets=study_sets)
 
 @app.route('/logout')
@@ -102,9 +101,11 @@ def create_jampack():
         return redirect(url_for('home'))
     if request.method == 'POST':
         title = request.form.get('title')
-        new_set = StudySet(title=title, user_id=user_id)
-        db.session.add(new_set)
-        db.session.commit()
+        new_set = {
+            'title': title,
+            'user_id': user_id
+        }        
+        supabase.table('study_sets').insert(new_set).execute()
         return redirect(url_for('dashboard'))
     return render_template('create_jampack.html')
 
@@ -113,40 +114,51 @@ def study_set(set_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    this_set = StudySet.query.filter_by(id=set_id, user_id=user_id).first()
+    this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
+    this_set = this_set_response.data[0] if this_set_response.data else None
     if not this_set:
         return jsonify({'error': 'Study set not found'}), 404
     if request.method == 'POST':
         if request.form.get('_method') == 'PUT':
-            this_set.title = request.form.get('title', this_set.title)
-            db.session.commit()
+            this_set['title'] = request.form.get('title', this_set['title'])
+            supabase.table('study_sets').update(this_set).eq('id', set_id).execute()
         elif request.form.get('_method') == 'SHARE':
             recipient_email = request.form.get('email')
-            recipient = User.query.filter_by(email=recipient_email).first()
+            recipient_response = supabase.table('users').select('*').eq('email', recipient_email).execute()
+            recipient = recipient_response.data[0] if recipient_response.data else None
             if not recipient:
                 flash('Recipient not found. Please check the email address and try again.', 'error')
                 return redirect(url_for('study_set', set_id=set_id))
-            sender = User.query.filter_by(id=user_id).first()
-            title = this_set.title + ' (from ' + sender.name + ')'
-            new_set = StudySet(title=title, user_id=recipient.id)
-            db.session.add(new_set)
-            db.session.commit()
-            for card in this_set.cards:
-                new_card = FlashCard(question=card.question, answer=card.answer, study_set_id=new_set.id)
-                db.session.add(new_card)
-            db.session.commit()
+            sender_response = supabase.table('users').select('*').eq('id', user_id).execute()
+            sender = sender_response.data[0] if sender_response.data else None
+            title = this_set['title'] + ' (from ' + sender['name'] + ')'
+            new_set = {
+                'title': title,
+                'user_id': recipient['id']
+            }
+            new_set_response = supabase.table('study_sets').insert(new_set).execute()
+            new_set_id = new_set_response.data[0]['id']
+            cards_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).execute()
+            cards = cards_response.data
+            for card in cards:
+                new_card = {
+                    'question': card['question'],
+                    'answer': card['answer'],
+                    'study_set_id': new_set_id
+                }
+                supabase.table('flash_cards').insert(new_card).execute()
             flash('Jampack shared successfully.', 'success')
         elif request.form.get('_method') == 'DELETE':
-            FlashCard.query.filter_by(study_set_id=set_id).delete()
-            db.session.delete(this_set)
-            db.session.commit()
+            supabase.table('flash_cards').delete().eq('study_set_id', set_id).execute()
+            supabase.table('study_sets').delete().eq('id', set_id).execute()
             return redirect(url_for('dashboard'))
-    cards = this_set.cards
+    cards_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).execute()
+    cards = cards_response.data
     shuffle = request.args.get('shuffle', 'false').lower() == 'true'
     starred_only = request.args.get('starred_only', 'false').lower() == 'true'
     flip_cards = request.args.get('flip_cards', 'false').lower() == 'true'
     if starred_only:
-        cards = [card for card in cards if card.starred]
+        cards = [card for card in cards if card['starred']]
     if shuffle:
         cards = random.sample(cards, len(cards))
     return render_template('study_set.html', study_set=this_set, cards=cards, shuffle=shuffle,
@@ -157,7 +169,8 @@ def add_card(set_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    this_set = StudySet.query.filter_by(id=set_id, user_id=user_id).first()
+    this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
+    this_set = this_set_response.data[0] if this_set_response.data else None
     if not this_set:
         return jsonify({'error': 'Study set not found'}), 404
     if request.method == 'POST':
@@ -168,9 +181,12 @@ def add_card(set_id):
             try:
                 flashcards = compose(text)
                 for card in flashcards:
-                    new_card = FlashCard(question=card['question'], answer=card['answer'], study_set_id=set_id)
-                    db.session.add(new_card)
-                db.session.commit()
+                    new_card = {
+                        'question': card['question'],
+                        'answer': card['answer'],
+                        'study_set_id': set_id
+                    }
+                    supabase.table('flash_cards').insert(new_card).execute()
                 flash(f"{len(flashcards)} cards added successfully!", "success")
             except Exception as e:
                 flash(f"Error generating cards: {str(e)}", "error")
@@ -180,9 +196,12 @@ def add_card(set_id):
             answer = request.form.get('answer')
             if not question or not answer:
                 return jsonify({'error': 'Both question and answer are required'}), 400
-            new_card = FlashCard(question=question, answer=answer, study_set_id=set_id)
-            db.session.add(new_card)
-            db.session.commit()
+            new_card = {
+                'question': question,
+                'answer': answer,
+                'study_set_id': set_id
+            }
+            supabase.table('flash_cards').insert(new_card).execute()
             flash("Card added successfully!", "success")
         return redirect(url_for('study_set', set_id=set_id))
     return render_template('add_card.html', study_set=this_set)
@@ -201,13 +220,19 @@ def jampack_generator():
         try:
             flashcards = compose(text)
             title = request.form.get('title')
-            new_set = StudySet(title=title, user_id=user_id)
-            db.session.add(new_set)
-            db.session.commit()
+            new_set = {
+                'title': title,
+                'user_id': user_id
+            }
+            new_set_response = supabase.table('study_sets').insert(new_set).execute()
+            new_set_id = new_set_response.data[0]['id']
             for card in flashcards:
-                new_card = FlashCard(question=card['question'], answer=card['answer'], study_set_id=new_set.id)
-                db.session.add(new_card)
-            db.session.commit()
+                new_card = {
+                    'question': card['question'],
+                    'answer': card['answer'],
+                    'study_set_id': new_set_id
+                }
+                supabase.table('flash_cards').insert(new_card).execute()
             flash(f"Jampack '{title}' created successfully with {len(flashcards)} cards!", "success")
             return redirect(url_for('dashboard'))
         except Exception as e:
@@ -343,14 +368,16 @@ def rapid_review(set_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    this_set = StudySet.query.filter_by(id=set_id, user_id=user_id).first()
+    this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
+    this_set = this_set_response.data[0] if this_set_response.data else None
     if request.method == 'POST':
         text = "Analyst the following text and generate flashcards.\nShorten this flashcard set to "
         text += str(request.form.get('text'))
         text += " flashcards, while covering the same range of material. When possible, make sure to not simply group " \
                 "combine the text of different flashcards, but rather, remodel the flashcards so that they touch " \
                 "more so on big picture main ideas than hyper-specific, small details.\n"
-        cards = this_set.cards
+        cards_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).execute()
+        cards = cards_response.data
         for card in cards:
             text += card.question
             text += ":"
@@ -359,15 +386,21 @@ def rapid_review(set_id):
         text += "\n"
         try:
             flashcards = compose(text)
-            title = this_set.title
+            title = this_set['title']
             title += " (Rapid Review)"
-            new_set = StudySet(title=title, user_id=user_id)
-            db.session.add(new_set)
-            db.session.commit()
+            new_set = {
+                'title': title,
+                'user_id': user_id
+            }
+            new_set_response = supabase.table('study_sets').insert(new_set).execute()
+            new_set_id = new_set_response.data[0]['id']
             for card in flashcards:
-                new_card = FlashCard(question=card['question'], answer=card['answer'], study_set_id=new_set.id)
-                db.session.add(new_card)
-            db.session.commit()
+                new_card = {
+                    'question': card['question'],
+                    'answer': card['answer'],
+                    'study_set_id': new_set_id
+                }
+                supabase.table('flash_cards').insert(new_card).execute()
             flash(f"Jampack '{title}' created successfully with {len(flashcards)} cards!", "success")
             return redirect(url_for('dashboard'))
         except Exception as e:
@@ -380,21 +413,24 @@ def edit_card(set_id, card_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    this_set = StudySet.query.filter_by(id=set_id, user_id=user_id).first()
+    this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
+    this_set = this_set_response.data[0] if this_set_response.data else None
     if not this_set:
         return jsonify({'error': 'Study set not found'}), 404
     if card_id is None:
         # If no card_id is provided, edit the first card
-        this_card = FlashCard.query.filter_by(study_set_id=set_id).first()
+        this_card_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).limit(1).execute()
     else:
-        this_card = FlashCard.query.filter_by(id=card_id, study_set_id=set_id).first()
+        this_card_response = supabase.table('flash_cards').select('*').eq('id', card_id).eq('study_set_id', set_id).execute()
+    
+    this_card = this_card_response.data[0] if this_card_response.data else None
     if not this_card:
         flash('No card to edit.', 'error')
         return redirect(url_for('study_set', set_id=set_id))
     if request.method == 'POST':
-        this_card.question = request.form.get('question')
-        this_card.answer = request.form.get('answer')
-        db.session.commit()
+        this_card['question'] = request.form.get('question')
+        this_card['answer'] = request.form.get('answer')
+        supabase.table('flash_cards').update(this_card).eq('id', this_card['id']).execute()
         return redirect(url_for('study_set', set_id=set_id))
     return render_template('edit_card.html', study_set=this_set, card=this_card)
 
@@ -404,16 +440,17 @@ def delete_card(set_id, card_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    this_set = StudySet.query.filter_by(id=set_id, user_id=user_id).first()
+    this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
+    this_set = this_set_response.data[0] if this_set_response.data else None
     if not this_set:
         return jsonify({'error': 'Jampack not found'}), 404
-    card_to_delete = FlashCard.query.filter_by(id=card_id, study_set_id=set_id).first()
+    card_to_delete_response = supabase.table('flash_cards').select('*').eq('id', card_id).eq('study_set_id', set_id).execute()
+    card_to_delete = card_to_delete_response.data[0] if card_to_delete_response.data else None
     if not card_to_delete:
         flash('No card to delete.', 'error')
         return redirect(url_for('study_set', set_id=set_id))
     else:
-        db.session.delete(card_to_delete)
-        db.session.commit()
+        supabase.table('flash_cards').delete().eq('id', card_id).execute()
     return redirect(url_for('study_set', set_id=set_id))
 
 @app.route('/jampacks/<int:set_id>/star_card/<int:card_id>', methods=['POST'])
@@ -421,15 +458,13 @@ def star_card(set_id, card_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
-    card = FlashCard.query.filter_by(id=card_id, study_set_id=set_id).first()
+    card_response = supabase.table('flash_cards').select('*').eq('id', card_id).eq('study_set_id', set_id).execute()
+    card = card_response.data[0] if card_response.data else None
     if not card:
         return jsonify({'error': 'Card not found'}), 404
-    card.starred = not card.starred
-    db.session.commit()
+    card['starred'] = not card.get('starred', False)
+    supabase.table('flash_cards').update({'starred': card['starred']}).eq('id', card_id).execute()
     return jsonify({'success': True, 'starred': card.starred})
 
 if __name__ == '__main__':
     app.run()
-else:
-    with app.app_context():
-        db.create_all()
