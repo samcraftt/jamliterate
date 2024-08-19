@@ -467,4 +467,4 @@ def star_card(set_id, card_id):
     return jsonify({'success': True, 'starred': card.starred})
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=10000)
