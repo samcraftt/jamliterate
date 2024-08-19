@@ -465,6 +465,3 @@ def star_card(set_id, card_id):
     card['starred'] = not card.get('starred', False)
     supabase.table('flash_cards').update({'starred': card['starred']}).eq('id', card_id).execute()
     return jsonify({'success': True, 'starred': card.starred})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
