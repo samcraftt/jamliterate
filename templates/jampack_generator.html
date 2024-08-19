@@ -79,7 +79,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -87,12 +86,10 @@ document.addEventListener('DOMContentLoaded', function() {
   var loadingMessage = document.getElementById('loading-message');
   var textArea = document.getElementById('text');
   var charCount = document.getElementById('char-count');
-
   form.addEventListener('submit', function(e) {
         loadingMessage.style.display = 'block';
         form.style.display = 'none';
   });
-
   textArea.addEventListener('input', function() {
     var remainingChars = 20000 - this.value.length;
     charCount.textContent = this.value.length + ' / 20,000 characters';
@@ -103,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
       charCount.style.color = 'initial';
     }
   });
-
   form.addEventListener('submit', function(e) {
     if (textArea.value.length > 20000) {
       e.preventDefault();
