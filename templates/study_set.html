@@ -170,16 +170,13 @@
     const editCardBtn = document.getElementById('edit-card-btn');
     const deleteCardBtn = document.getElementById('delete-card-btn');
     const setId = {{ study_set.id }};
-
     function updateLinks() {
         const cardId = cards[currentCard].dataset.cardId;
         const newEditHref = `{{ url_for('edit_card', set_id=study_set.id) }}/${cardId}`;
         editCardBtn.href = newEditHref;
-
         const newDeleteHref = `{{ url_for('delete_card', set_id=study_set.id) }}/${cardId}`;
         deleteCardBtn.href = newDeleteHref;
     }
-
     function starCard(cardId) {
         fetch(`/jampacks/{{ study_set.id }}/star_card/${cardId}`, {
             method: 'POST',
@@ -195,11 +192,9 @@
             }
         });
     }
-
     function flipCard(card) {
         card.classList.toggle('flipped');
     }
-
     function nextCard() {
         cards[currentCard].style.display = 'none';
         currentCard = (currentCard + 1) % cards.length;
@@ -208,7 +203,6 @@
         currentCardSpan.textContent = currentCard + 1;
         updateLinks();
     }
-
     function previousCard() {
         cards[currentCard].style.display = 'none';
         currentCard = (currentCard - 1 + cards.length) % cards.length;
@@ -217,14 +211,11 @@
         currentCardSpan.textContent = currentCard + 1;
         updateLinks();
     }
-
     document.querySelectorAll('.flashcard').forEach(card => {
         card.addEventListener('click', () => flipCard(card));
     });
-
     document.getElementById('next-button').addEventListener('click', nextCard);
     document.getElementById('previous-button').addEventListener('click', previousCard);
-
     document.addEventListener('keydown', (e) => {
         if (e.code === 'ArrowUp') {
             flipCard(cards[currentCard]);
@@ -234,8 +225,6 @@
             previousCard();
         }
     });
-
     updateLinks();
-
 </script>
 {% endblock %}
