@@ -1,2 +1,0 @@
-In production, the app.yaml file contains the authentication keys 
-and URLs necessary for Flask, PostgreSQL, OpenAI, and Google Oauth.
