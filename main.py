@@ -38,8 +38,8 @@ def home():
 
 @app.route('/login')
 def login():
-    flow = Flow.from_client_secrets_file(
-        'client_secrets.json',
+    flow = Flow.from_client_config(
+        client_secrets,
         scopes=['openid', 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/userinfo.email']
     )
@@ -55,8 +55,8 @@ def login():
 def callback():
     if 'state' not in session:
         return redirect(url_for('login'))
-    flow = Flow.from_client_secrets_file(
-        'client_secrets.json',
+    flow = Flow.from_client_config(
+        client_secrets,
         scopes=['openid', 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/userinfo.email'],
         state=session['state']
