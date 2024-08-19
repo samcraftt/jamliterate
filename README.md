@@ -4,3 +4,5 @@ Jamliterate is an educational web application motivated to subtract the boilerpl
 of studying that delay mastery.
 
 Our goal is to make learning convenient, simple, and fun.
+
+Please check out [jamliterate.com](jamliterate.com)!
