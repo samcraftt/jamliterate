@@ -5,4 +5,4 @@ of studying that delay mastery.
 
 Our goal is to make learning convenient, simple, and fun.
 
-Please check out [jamliterate.com](jamliterate.com)!
+Please check out [jamliterate.com](https://jamliterate.com)!
