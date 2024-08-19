@@ -1,6 +1,7 @@
 Flask==3.0.3
 google-auth==2.32.0
 google-auth-oauthlib==1.2.1
+requests==2.27.1
 openai==0.28.0
 gunicorn==20.1.0
 supabase==1.0.3
