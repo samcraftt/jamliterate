@@ -84,7 +84,7 @@
         right: 10px;
         background: none;
         border: none;
-        font-size: 24px;
+        font-size: 48px;
         cursor: pointer;
         color: gold;
     }
@@ -123,7 +123,7 @@
             <div class="question">{{ card.question if not flip_cards else card.answer }}</div>
             <div class="answer">{{ card.answer if not flip_cards else card.question }}</div>
         </div>
-        <button class="star-btn" onclick="starCard({{ card.id }})">
+        <button class="star-btn" onclick="starCard({{ card.id }}, event)">
             {% if card.starred %}★{% else %}☆{% endif %}
         </button>
     </div>
@@ -177,11 +177,12 @@
         const newDeleteHref = `{{ url_for('delete_card', set_id=study_set.id) }}/${cardId}`;
         deleteCardBtn.href = newDeleteHref;
     }
-    function starCard(cardId) {
+    function starCard(cardId, event) {
+        event.stopPropagation();
         fetch(`/jampacks/{{ study_set.id }}/star_card/${cardId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
             },
         })
         .then(response => response.json())
@@ -212,7 +213,11 @@
         updateLinks();
     }
     document.querySelectorAll('.flashcard').forEach(card => {
-        card.addEventListener('click', () => flipCard(card));
+        card.addEventListener('click', (event) => {
+            if (!event.target.closest('.star-btn')) {
+                flipCard(card);
+            }
+        });
     });
     document.getElementById('next-button').addEventListener('click', nextCard);
     document.getElementById('previous-button').addEventListener('click', previousCard);
