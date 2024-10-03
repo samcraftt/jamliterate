@@ -239,7 +239,7 @@ def jampack_generator():
 
 def compose(text):
     response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
+        model="gpt-4o-2024-08-06",
         messages=[
             {
                 "role": "system",
