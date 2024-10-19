@@ -20,6 +20,7 @@ supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
 
+# EDITS SHOULD ONLY BE MADE BELOW THIS LINE, AND ABOVE A SIMILAR LINE AT THE END OF THIS FILE
 @app.route('/favicon.png')
 def favicon():
     return send_from_directory(os.path.join(app.root_path), 'favicon.png', mimetype='image/png')
@@ -464,6 +465,7 @@ def star_card(set_id, card_id):
     card['starred'] = not card.get('starred', False)
     supabase.table('flash_cards').update({'starred': card['starred']}).eq('id', card_id).execute()
     return jsonify({'success': True, 'starred': card['starred']})
+# EDITS SHOULD ONLY BE MADE ABOVE THIS LINE, AND BELOW A SIMILAR LINE AT THE BEGINNING OF THIS FILE
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
