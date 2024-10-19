@@ -1,8 +1,7 @@
 <h1>Jamliterate</h1>
 
-Jamliterate is an educational web application motivated to subtract the boilerplate processes 
-of studying that delay mastery.
+Jamliterate is an educational web application that generates study flashcards from any text.
 
-Our goal is to make learning convenient, simple, and fun.
+The goal is to make learning convenient, simple, and fun.
 
 Please check out [jamliterate.com](https://jamliterate.com)!
