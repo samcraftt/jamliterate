@@ -1,6 +1,6 @@
 <h1>Jamliterate</h1>
 
-Jamliterate is an educational web application that generates study flashcards from any text. The goal is to make studying convenient and simple.
+Jamliterate is an educational web application that generates study flashcards from any text.
 
 This application was built with Python and the web framework Flask. "main.py" contains the Python code that dictates the general functionality of the app. The "templates" directory contains all the files containing HTML, CSS, and JavaScript that fabricate the appearance and interactivity of the app. Additional files ("requirements.txt" and "render.yaml") are included to convey pieces of the deployment process of Jamliterate.
 
