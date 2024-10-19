@@ -1,4 +1,4 @@
-<h1>Jamliterate</h1>
+<h1>jamliterate</h1>
 
 Jamliterate is an educational web application that generates study flashcards from any text.
 
