@@ -103,8 +103,8 @@
         <form method="POST" id="ai-form">
             <div class="form-group">
                 <label for="text">Text:</label>
-                <textarea id="text" name="text" rows="10" required maxlength="20000"></textarea>
-                <p id="char-count">0 / 20,000 characters</p>
+                <textarea id="text" name="text" rows="10" required maxlength="10000"></textarea>
+                <p id="char-count">0 / 10,000 characters</p>
             </div>
             <div class="form-group">
                 <label for="num_cards">Number of cards to add (max = 35):</label>
@@ -140,8 +140,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var aiForm = document.getElementById('ai-form');
     var loadingMessage = document.getElementById('loading-message');
     textArea.addEventListener('input', function() {
-        var remainingChars = 20000 - this.value.length;
-        charCount.textContent = this.value.length + ' / 20,000 characters';
+        var remainingChars = 10000 - this.value.length;
+        charCount.textContent = this.value.length + ' / 10,000 characters';
         if (remainingChars < 0) {
             charCount.style.color = 'red';
         } else {
@@ -149,9 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     aiForm.addEventListener('submit', function(e) {
-        if (textArea.value.length > 20000) {
+        if (textArea.value.length > 10000) {
             e.preventDefault();
-            alert('Text must be 20,000 characters or less.');
+            alert('Text must be 10,000 characters or less.');
         } else {
             loadingMessage.style.display = 'block';
             aiForm.style.display = 'none';
