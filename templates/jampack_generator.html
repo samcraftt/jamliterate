@@ -51,21 +51,24 @@
     }
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="composer-container">
     <h1>AI-Powered Jampack Generator</h1>
-    <p>Three examples of acceptable text submissions:</p>
-    <p>1) A reading you were assigned in history class</p>
-    <p>2) A formatted list of terms and definitions/translations, such as "hola=hello, manzana=apple, rojo=red,..."</p>
-    <p>3) A simple request, like "Make me a Jampack about current events."</p>
     <form action="{{ url_for('jampack_generator') }}" method="post">
         <div class="form-group">
-            <label for="title">Title:</label>
+            <label for="title">Jampack Title:</label>
             <input type="text" id="title" name="title" required>
         </div>
         <div class="form-group">
             <label for="text">Text:</label>
-            <textarea id="text" name="text" rows="10" required maxlength="10000"></textarea>
+            <textarea id="text" name="text" rows="10" required maxlength="10000" placeholder="&quot;I have a quiz on this reading tomorrow. Make some flashcards to help me study...&quot;
+
+&quot;Here's a list of Spanish vocabulary. Make me a Jampack...&quot;
+
+&quot;Make me a study set about current events...&quot;
+
+&quot;Help me prepare for my job interview at...&quot;"></textarea>
             <p id="char-count">0 / 10,000 characters</p>
         </div>
         <div class="form-group">
@@ -79,36 +82,39 @@
     </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  var form = document.querySelector('form');  // Select the form without relying on an id
-  var loadingMessage = document.getElementById('loading-message');
-  var textArea = document.getElementById('text');
-  var charCount = document.getElementById('char-count');
-  form.addEventListener('submit', function(e) {
+    var form = document.querySelector('form');
+    var loadingMessage = document.getElementById('loading-message');
+    var textArea = document.getElementById('text');
+    var charCount = document.getElementById('char-count');
+
+    form.addEventListener('submit', function(e) {
         loadingMessage.style.display = 'block';
         form.style.display = 'none';
-  });
-  textArea.addEventListener('input', function() {
-    var remainingChars = 10000 - this.value.length;
-    charCount.textContent = this.value.length + ' / 10,000 characters';
+    });
 
-    if (remainingChars < 0) {
-      charCount.style.color = 'red';
-    } else {
-      charCount.style.color = 'initial';
-    }
-  });
-  form.addEventListener('submit', function(e) {
-    if (textArea.value.length > 10000) {
-      e.preventDefault();
-      alert('Text must be 10,000 characters or less.');
-    } else {
-      loadingMessage.style.display = 'block';
-      form.style.display = 'none';
-    }
-  });
+    textArea.addEventListener('input', function() {
+        var remainingChars = 10000 - this.value.length;
+        charCount.textContent = this.value.length + ' / 10,000 characters';
+        if (remainingChars < 0) {
+            charCount.style.color = 'red';
+        } else {
+            charCount.style.color = 'initial';
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        if (textArea.value.length > 10000) {
+            e.preventDefault();
+            alert('Text must be 10,000 characters or less.');
+        } else {
+            loadingMessage.style.display = 'block';
+            form.style.display = 'none';
+        }
+    });
 });
 </script>
 {% endblock %}
