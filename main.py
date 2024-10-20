@@ -175,7 +175,11 @@ def add_card(set_id):
     if request.method == 'POST':
         if 'generate' in request.form:
             # Handle AI-generated cards
-            text = f"Generate {request.form.get('num_cards', 10)} flashcards based on the following text:\n"
+            text = f"Generate"
+            num_cards = request.form.get('num_cards')
+            if num_cards:
+                text += f" {num_cards}"
+            text += " flashcards based on the following text:\n"
             text += request.form.get('text', '')
             try:
                 flashcards = compose(text)
@@ -211,8 +215,10 @@ def jampack_generator():
     if not user_id:
         return redirect(url_for('home'))
     if request.method == 'POST':
-        text = "Analyze the provided text and generate "
-        text += request.form.get('num_cards', 10)  # Default to 10 if not provided
+        text = "Analyze the provided text and generate"
+        num_cards = request.form.get('num_cards')
+        if num_cards:
+            text += f" {num_cards}"
         text += " flashcards.\n"
         text += request.form.get('text')
         # Call OpenAI API to analyze text and generate flashcards
