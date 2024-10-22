@@ -51,7 +51,6 @@
     }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="composer-container">
     <h1>AI-Powered Jampack Generator</h1>
@@ -62,14 +61,17 @@
         </div>
         <div class="form-group">
             <label for="text">Text:</label>
-            <textarea id="text" name="text" rows="10" required maxlength="20000" placeholder="&quot;I have a quiz on this reading tomorrow. Make some flashcards to help me study...&quot;
+            <textarea id="text" name="text" rows="10" required maxlength="{{ max_chars }}" placeholder="&quot;I have a quiz on this reading tomorrow. Make some flashcards to help me study...&quot;
 
 &quot;Here's a list of Spanish vocabulary. Make me a Jampack...&quot;
 
 &quot;Make me a study set about current events...&quot;
 
 &quot;Help me prepare for my job interview at...&quot;"></textarea>
-            <p id="char-count">0 / 20,000 characters</p>
+            <p id="char-count">0 / {{ max_chars }} characters</p>
+            {% if not premium %}
+            <em style="color: grey;"><a href="{{ url_for('subscription') }}">Enroll in Jamliterate Premium</a> to increase your limit to 20,000 characters!</em>
+            {% endif %}
         </div>
         <div class="form-group">
             <label for="num_cards">Estimated number of cards (optional, max = 50):</label>
@@ -83,7 +85,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -91,26 +92,24 @@ document.addEventListener('DOMContentLoaded', function() {
     var loadingMessage = document.getElementById('loading-message');
     var textArea = document.getElementById('text');
     var charCount = document.getElementById('char-count');
-
+    var maxChars = {{ max_chars }};
     form.addEventListener('submit', function(e) {
         loadingMessage.style.display = 'block';
         form.style.display = 'none';
     });
-
     textArea.addEventListener('input', function() {
-        var remainingChars = 20000 - this.value.length;
-        charCount.textContent = this.value.length + ' / 20,000 characters';
+        var remainingChars = maxChars - this.value.length;
+        charCount.textContent = this.value.length + ' / ' + maxChars + ' characters';
         if (remainingChars < 0) {
             charCount.style.color = 'red';
         } else {
             charCount.style.color = 'initial';
         }
     });
-
     form.addEventListener('submit', function(e) {
-        if (textArea.value.length > 20000) {
+        if (textArea.value.length > maxChars) {
             e.preventDefault();
-            alert('Text must be 20,000 characters or less.');
+            alert('Text must be ' + maxChars + ' characters or less.');
         } else {
             loadingMessage.style.display = 'block';
             form.style.display = 'none';
