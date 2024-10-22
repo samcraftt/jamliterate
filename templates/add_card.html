@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Add Card{% endblock %}
+{% block title %}Add Cards{% endblock %}
 {% block extra_css %}
 <style>
     .form-container {
@@ -77,41 +77,24 @@
         font-weight: bold;
         display: none;
     }
-
-
 </style>
 {% endblock %}
 {% block content %}
 <div class="form-container">
-    <h1>Add Card to {{ study_set.title }}</h1>
-    <div class="tab">
-        <button class="tablinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual Entry</button>
-        <button class="tablinks" onclick="openTab(event, 'AI')">Jampack Generator</button>
-    </div>
-    <div id="Manual" class="tabcontent">
-        <form method="POST">
-            <div class="form-group">
-                <label for="question">Question:</label>
-                <textarea id="question" name="question" rows="4" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="answer">Answer:</label>
-                <textarea id="answer" name="answer" rows="4" required></textarea>
-            </div>
-            <button type="submit" class="submit-btn">Add Card</button>
-        </form>
-    </div>
-    <div id="AI" class="tabcontent">
+    <h1>Add Cards with Jampack Generator</h1>
+    <div id="AI" class="tabcontent" style="display: block;">
         <form method="POST" id="ai-form">
             <div class="form-group">
                 <label for="text">Text:</label>
-                <textarea id="text" name="text" rows="10" required maxlength="20000"></textarea>
-                <p id="char-count">0 / 20,000 characters</p>
+                <textarea id="text" name="text" rows="10" required maxlength="{{ max_chars }}"></textarea>
+                <p id="char-count">0 / {{ max_chars }} characters</p>
+                {% if not premium %}
+                <em style="color: grey;"><a href="{{ url_for('subscription') }}">Enroll in Jamliterate Premium</a> to increase your limit to 20,000 characters!</em>
+                {% endif %}
             </div>
             <div class="form-group">
                 <label for="num_cards">Number of cards to add (optional, max = 50):</label>
-                <input type="number" id="num_cards" name="num_cards" min="1" max="50"
-                       placeholder="Leave blank to default to the recommended number of cards.">
+                <input type="number" id="num_cards" name="num_cards" min="1" max="50" placeholder="Leave blank to default to the recommended number of cards.">
             </div>
             <button type="submit" name="generate" value="true" class="submit-btn">Generate Cards</button>
         </form>
@@ -123,45 +106,28 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
-document.getElementById("defaultOpen").click();
 document.addEventListener('DOMContentLoaded', function() {
     var textArea = document.getElementById('text');
     var charCount = document.getElementById('char-count');
     var aiForm = document.getElementById('ai-form');
     var loadingMessage = document.getElementById('loading-message');
+    var maxChars = {{ max_chars }};
+    // Update character count as user types
     textArea.addEventListener('input', function() {
-        var remainingChars = 20000 - this.value.length;
-        charCount.textContent = this.value.length + ' / 20,000 characters';
-        if (remainingChars < 0) {
-            charCount.style.color = 'red';
-        } else {
-            charCount.style.color = 'initial';
-        }
+        var remainingChars = maxChars - this.value.length;
+        charCount.textContent = this.value.length + ' / ' + maxChars + ' characters';
+        charCount.style.color = remainingChars < 0 ? 'red' : 'initial';
     });
+    // Show loading message and validate input on form submission
     aiForm.addEventListener('submit', function(e) {
-        if (textArea.value.length > 20000) {
+        if (textArea.value.length > maxChars) {
             e.preventDefault();
-            alert('Text must be 20,000 characters or less.');
+            alert('Text must be ' + maxChars + ' characters or less.');
         } else {
             loadingMessage.style.display = 'block';
             aiForm.style.display = 'none';
         }
     });
 });
-
-
 </script>
 {% endblock %}
