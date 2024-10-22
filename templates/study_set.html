@@ -34,16 +34,13 @@
     font-size: 18px;
     transition: opacity 0.3s ease;
 }
-
 .answer {
-    background-color: #e8e8e8;
+    background-color: #f2f2f2;
     opacity: 0;
 }
-
 .flashcard.flipped .question {
     opacity: 0;
 }
-
 .flashcard.flipped .answer {
     opacity: 1;
 }
@@ -94,6 +91,19 @@
         cursor: pointer;
         color: black;
     }
+    .red-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #ff4136;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+        border: none;
+    }
+    .red-btn:hover {
+        background-color: #a70026;
+    }
 </style>
 {% endblock %}
 {% block content %}
@@ -143,25 +153,14 @@
 <p>For fast navigation, use the up arrow key to flip the current card, and the left and right arrow keys to switch cards.</p>
 <div class="actions" style="margin-top: 30px;">
     <div class="left-actions">
-        <a href="{{ url_for('add_card', set_id=study_set.id) }}" class="btn">Add Card(s)</a>
+        <a href="{{ url_for('add_card', set_id=study_set.id) }}" class="btn">Add Cards</a>
         <a href="{{ url_for('edit_card', set_id=study_set.id) }}" class="btn" id="edit-card-btn">Edit Current Card</a>
-        <a href="{{ url_for('delete_card', set_id=study_set.id) }}" style="background-color: #ff4136;" class="btn" id="delete-card-btn">Delete Current Card</a>
+        <a href="{{ url_for('delete_card', set_id=study_set.id) }}" class="red-btn" id="delete-card-btn">Delete Current Card</a>
     </div>
     <div class="right-actions">
-        <a href="{{ url_for('rapid_review', set_id=study_set.id) }}" class="btn">Rapid Review</a>
+        <a href="{{ url_for('rapid_review', set_id=study_set.id) }}" class="btn">★ Rapid Review</a>
     </div>
 </div>
-<hr>
-<h3>Manage Jampack</h3>
-<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}" style="margin-bottom: 10px;">
-    <input type="hidden" name="_method" value="PUT">
-    <input type="text" name="title" placeholder="New title" value="{{ study_set.title }}">
-    <button type="submit" class="btn">Update Title</button>
-</form>
-<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}" style="margin-bottom: 10px;">
-    <input type="hidden" name="_method" value="DELETE">
-    <button type="submit" class="btn" style="background-color: #ff4136;">Delete Jampack</button>
-</form>
 <hr>
 <h3>Share Jampack</h3>
 <form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}">
@@ -169,6 +168,19 @@
     <input type="text" name="email" placeholder="Recipient's Email">
     <button type="submit" class="btn">Share</button>
 </form>
+<hr>
+<h3>Manage Jampack</h3>
+<div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}" style="margin-bottom: 10px;">
+    <input type="hidden" name="_method" value="PUT">
+    <input type="text" name="title" placeholder="New title" value="{{ study_set.title }}">
+    <button type="submit" class="btn">Update Title</button>
+</form>
+<form method="POST" action="{{ url_for('study_set', set_id=study_set.id) }}" style="margin-bottom: 10px;">
+    <input type="hidden" name="_method" value="DELETE">
+    <button type="submit" class="red-btn">Delete Jampack</button>
+</form>
+</div>
 {% endblock %}
 {% block extra_js %}
 <script>
