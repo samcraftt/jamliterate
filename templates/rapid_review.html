@@ -82,7 +82,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     var form = document.querySelector('form');  // Select the form without relying on an id
     var loadingMessage = document.getElementById('loading-message');
-
     form.addEventListener('submit', function(e) {
         loadingMessage.style.display = 'block';
         form.style.display = 'none';
