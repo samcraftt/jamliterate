@@ -136,7 +136,7 @@
 </div>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
-    var stripe = Stripe();
+    var stripe = Stripe('pk_live_51QC1VfLn5pX9eqrSx8fPehzTknb74PuLTf4ulrJBddN2lw5QCsuMHas386wM7UvU8uVawfVNOKvLOFxjS9kBrlRt005G249hyd');
     function subscribe(plan) {
         fetch('/create-checkout-session', {
             method: 'POST',
