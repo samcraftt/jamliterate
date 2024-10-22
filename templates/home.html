@@ -1,29 +1,54 @@
 {% extends "base.html" %}
-
-{% block title %}Simplified Studying{% endblock %}
-
+{% block title %}Home{% endblock %}
 {% block content %}
-<div style="text-align: center; margin-top: 100px;">
-    <h1>Welcome to Jamliterate!</h1>
-    <p>Accelerate your learning experience with our simplified study tools.</p>
-    <a href="{{ url_for('login') }}" class="google-btn">
-        <span class="google-icon">
-            <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
-                <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                    <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
-                    <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
-                    <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-                    <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
-                </g>
-            </svg>
-        </span>
-        <span>Continue with Google</span>
-    </a>
+<div class="homepage-container">
+    <header class="header-section">
+        <h1>Welcome to Jamliterate!</h1>
+        <p class="subtitle">Accelerate your learning with our personalized study tools.</p>
+        <a href="{{ url_for('login') }}" class="google-btn">
+            <span class="google-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                    <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
+                        <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
+                        <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
+                        <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
+                        <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+                    </g>
+                </svg>
+            </span>
+            <span>Continue with Google</span>
+        </a>
+    </header>
+    <br><hr><br>
+    <section class="about-section">
+        <h2>About Jamliterate</h2>
+        <p>Jamliterate offers personalized learning tools, including flashcards, AI-enhanced test prep, and simplified study features. Our platform empowers students 14+ to learn more efficiently.</p>
+    </section>
+    <section class="contact-section">
+        <h3>Contact Us</h3>
+        <p><strong>Email:</strong> <a href="mailto:info@jamliterate.com">info@jamliterate.com</a></p>
+    </section>
 </div>
 {% endblock %}
-
 {% block extra_css %}
 <style>
+    .homepage-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: 'Arial', sans-serif;
+    }
+    .header-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .highlight {
+        color: var(--teal);
+    }
+    .subtitle {
+        font-size: 1.2rem;
+        margin: 10px 0;
+    }
     .google-btn {
         display: inline-flex;
         align-items: center;
@@ -35,22 +60,28 @@
         font-size: 16px;
         font-weight: bold;
         text-decoration: none;
+        margin-top: 20px;
         transition: background-color 0.3s;
     }
-
     .google-btn:hover {
-        background-color: #357ae8;
+        background-color: #007a8d;
     }
-
     .google-icon {
         background-color: white;
         border-radius: 2px;
         padding: 4px;
         margin-right: 10px;
     }
-
-    .google-icon svg {
-        display: block;
+    .about-section,
+    .contact-section {
+        margin-top: 30px;
+    }
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    ul li {
+        margin: 8px 0;
     }
 </style>
 {% endblock %}
