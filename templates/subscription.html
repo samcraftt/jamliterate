@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Premium{% endblock %}
+{% block extra_css %}
+<style>
+.subscription-options {
+    display: flex;
+    justify-content: center; /* Center the options */
+    margin-top: 50px;
+}
+.subscription-option {
+    border: 4px solid #f3c69b;
+    border-radius: 5px;
+    padding: 20px; /* Padding for more space inside */
+    width: 350px; /* Width */
+    height: 220px; /* Set a fixed height for consistency */
+    text-align: center;
+    margin: 0 20px; /* Added horizontal margin for space between boxes */
+}
+.subscribe-btn {
+    background-color: #51aab6;
+    color: white;
+    border: none;
+    padding: 15px 25px; /* Padding for larger button */
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 18px; /* Font size for readability */
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+.subscribe-btn:hover {
+    background-color: #007a8d;
+}
+.description {
+    margin-top: 20px; /* Space above the description */
+    font-size: 16px; /* Font size for visibility */
+    text-align: center; /* Center align the description */
+    color: #666; /* Optional: lighter color for descriptions */
+}
+.italic {
+    font-style: italic;
+}
+/* Styles for the confirmation dialog */
+.confirmation-dialog {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    text-align: center;
+}
+.confirmation-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+.confirmation-buttons {
+    margin-top: 20px;
+}
+.confirmation-buttons button {
+    margin: 0 10px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+}
+.confirm-btn {
+    background-color: #dc3545;
+    color: white;
+}
+.cancel-btn {
+    background-color: #6c757d;
+    color: white;
+}
+</style>
+{% endblock %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+{% endwith %}
+{% if user.premium %}
+<h1>Manage My Subscription</h1>
+{% else %}
+<h1>Upgrade to Jamliterate Premium</h1>
+{% endif %}
+<div class="subscription-options">
+    {% if user.premium %}
+    <div class="subscription-option">
+        <h2>Jamliterate Premium</h2>
+        <p>Includes Rapid Review and 20,000 character Jampack Generator submissions.</p>
+        <form id="cancelSubscriptionForm" method="POST" action="{{ url_for('cancel_subscription') }}">
+            <button type="button" class="subscribe-btn" onclick="confirm()">Cancel Subscription</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="subscription-option">
+        <h2>Monthly Plan</h2>
+        <p>$4.99 per month</p>
+        <button class="subscribe-btn" onclick="subscribe('monthly')">Subscribe Monthly</button>
+    </div>
+    <div class="subscription-option">
+        <h2>Yearly Plan</h2>
+        <p>$29.99 per year</p>
+        <button class="subscribe-btn" onclick="subscribe('yearly')">Subscribe Yearly</button>
+        <p class="italic">Save 50%!</p> <!-- Added italic class -->
+    </div>
+    {% endif %}
+</div>
+{% if not user.premium %}
+<p class="description">Includes Rapid Review and a 10,000 character increase on Jampack Generator's character limit!</p>
+{% endif %}
+<div class="confirmation-overlay" id="confirmationOverlay"></div>
+<div class="confirmation-dialog" id="confirmationDialog">
+    <h3>Cancel Subscription</h3>
+    <p>Are you sure you want to cancel your premium subscription? You'll lose access to premium features.</p>
+    <div class="confirmation-buttons">
+        <button class="cancel-btn" onclick="hideConfirmation()">Keep Subscription</button>
+        <button class="confirm-btn" onclick="submitCancellation()">Yes, Cancel</button>
+    </div>
+</div>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    var stripe = Stripe('pk_test_51QC1VfLn5pX9eqrShFDXC5bXHwsMSIL2xrAJToT0tn4u7dj7zhSlOYN3Xz4Azr0COTlXbb6nsj6X2g4e0nMegeOK002apcC3B0');
+    function subscribe(plan) {
+        fetch('/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'plan=' + plan
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(session) {
+            return stripe.redirectToCheckout({ sessionId: session.id });
+        })
+        .then(function(result) {
+            if (result.error) {
+                alert(result.error.message);
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+        });
+    }
+    function confirm() {
+        document.getElementById('confirmationDialog').style.display = 'block';
+        document.getElementById('confirmationOverlay').style.display = 'block';
+    }
+    function hideConfirmation() {
+        document.getElementById('confirmationDialog').style.display = 'none';
+        document.getElementById('confirmationOverlay').style.display = 'none';
+    }
+    function submitCancellation() {
+        document.getElementById('cancelSubscriptionForm').submit();
+    }
+</script>
+{% endblock %}
