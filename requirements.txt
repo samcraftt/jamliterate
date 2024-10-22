@@ -5,3 +5,4 @@ requests==2.27.1
 openai==0.28.0
 gunicorn==20.1.0
 supabase==1.0.3
+stripe==11.1.1
