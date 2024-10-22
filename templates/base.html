@@ -45,6 +45,7 @@
             color: white;
             text-decoration: none;
             border-radius: 5px;
+            border: none;
             transition: background-color 0.3s ease;
         }
         .btn:hover {
@@ -91,24 +92,25 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav>
-        <div class="container">
-            <a href="{{ url_for('home') }}" class="logo-container">
-                <img src="{{ url_for('favicon') }}" alt="Jamliterate Logo" class="logo-image">
-                <span class="logo">Jamliterate</span>
-            </a>
-            <div>
-                {% if session.get('user_id') %}
-                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('logout') }}">Log Out</a>
-                {% endif %}
-                {% block nav %}{% endblock %}
-            </div>
-        </div>
-    </nav>
+<nav>
     <div class="container">
-        {% block content %}{% endblock %}
+        <a href="{{ url_for('home') }}" class="logo-container">
+            <img src="{{ url_for('favicon') }}" alt="Jamliterate Logo" class="logo-image">
+            <span class="logo">Jamliterate</span>
+        </a>
+        <div>
+            {% if session.get('user_id') %}
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('subscription') }}">My Plan</a>
+            <a href="{{ url_for('logout') }}">Log Out</a>
+            {% endif %}
+            {% block nav %}{% endblock %}
+        </div>
     </div>
-    {% block extra_js %}{% endblock %}
+</nav>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+{% block extra_js %}{% endblock %}
 </body>
 </html>
