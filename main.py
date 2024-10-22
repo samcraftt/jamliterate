@@ -7,6 +7,8 @@ import random
 import openai
 import json
 from supabase import create_client, Client
+import stripe
+from datetime import datetime, timezone
 
 client_secrets = json.loads(os.getenv("CLIENT_SECRETS_JSON"))
 
@@ -19,6 +21,8 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(supabase_url, supabase_key)
+stripe.api_key = os.environ.get("STRIPE_API_KEY")
+PUBLISHABLE_KEY = 'pk_live_51QC1VfLn5pX9eqrSx8fPehzTknb74PuLTf4ulrJBddN2lw5QCsuMHas386wM7UvU8uVawfVNOKvLOFxjS9kBrlRt005G249hyd'
 
 # EDITS SHOULD ONLY BE MADE BELOW THIS LINE, AND ABOVE A SIMILAR LINE AT THE END OF THIS FILE
 @app.route('/favicon.png')
@@ -94,21 +98,6 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('home'))
 
-@app.route('/create_jampack', methods=['GET', 'POST'])
-def create_jampack():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('home'))
-    if request.method == 'POST':
-        title = request.form.get('title')
-        new_set = {
-            'title': title,
-            'user_id': user_id
-        }
-        supabase.table('study_sets').insert(new_set).execute()
-        return redirect(url_for('dashboard'))
-    return render_template('create_jampack.html')
-
 @app.route('/jampacks/<int:set_id>', methods=['GET', 'POST'])
 def study_set(set_id):
     user_id = session.get('user_id')
@@ -168,52 +157,44 @@ def add_card(set_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
+    user_response = supabase.table('users').select('premium').eq('id', user_id).execute()
+    premium = user_response.data[0]['premium'] if user_response.data else False
+    max_chars = 20000 if premium else 10000
     this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
     this_set = this_set_response.data[0] if this_set_response.data else None
     if not this_set:
         return jsonify({'error': 'Study set not found'}), 404
-    if request.method == 'POST':
-        if 'generate' in request.form:
-            # Handle AI-generated cards
-            text = f"Generate"
-            num_cards = request.form.get('num_cards')
-            if num_cards:
-                text += f" {num_cards}"
-            text += " flashcards based on the following text:\n"
-            text += request.form.get('text', '')
-            try:
-                flashcards = compose(text)
-                for card in flashcards:
-                    new_card = {
-                        'question': card['question'],
-                        'answer': card['answer'],
-                        'study_set_id': set_id
-                    }
-                    supabase.table('flash_cards').insert(new_card).execute()
-                flash(f"{len(flashcards)} cards added successfully!", "success")
-            except Exception as e:
-                flash(f"Error generating cards: {str(e)}", "error")
-        else:
-            # Handle manually added card
-            question = request.form.get('question')
-            answer = request.form.get('answer')
-            if not question or not answer:
-                return jsonify({'error': 'Both question and answer are required'}), 400
-            new_card = {
-                'question': question,
-                'answer': answer,
-                'study_set_id': set_id
-            }
-            supabase.table('flash_cards').insert(new_card).execute()
-            flash("Card added successfully!", "success")
+    if request.method == 'POST' and 'generate' in request.form:
+        # Handle AI-generated cards
+        text = f"Generate"
+        num_cards = request.form.get('num_cards')
+        if num_cards:
+            text += f" {num_cards}"
+        text += " flashcards based on the following text:\n"
+        text += request.form.get('text', '')
+        try:
+            flashcards = compose(text)
+            for card in flashcards:
+                new_card = {
+                    'question': card['question'],
+                    'answer': card['answer'],
+                    'study_set_id': set_id
+                }
+                supabase.table('flash_cards').insert(new_card).execute()
+            flash(f"{len(flashcards)} cards added successfully!", "success")
+        except Exception as e:
+            flash(f"Error generating cards: {str(e)}", "error")
         return redirect(url_for('study_set', set_id=set_id))
-    return render_template('add_card.html', study_set=this_set)
+    return render_template('add_card.html', study_set=this_set, max_chars=max_chars, premium=premium)
 
 @app.route('/jampack_generator', methods=['GET', 'POST'])
 def jampack_generator():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
+    user_response = supabase.table('users').select('premium').eq('id', user_id).execute()
+    premium = user_response.data[0]['premium'] if user_response.data else False
+    max_chars = 20000 if premium else 10000
     if request.method == 'POST':
         text = "Analyze the provided text and generate"
         num_cards = request.form.get('num_cards')
@@ -242,7 +223,7 @@ def jampack_generator():
             return redirect(url_for('dashboard'))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
-    return render_template('jampack_generator.html')
+    return render_template('jampack_generator.html', max_chars=max_chars, premium=premium)
 
 def compose(text):
     response = openai.ChatCompletion.create(
@@ -373,6 +354,10 @@ def rapid_review(set_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('home'))
+    user_response = supabase.table('users').select('premium').eq('id', user_id).execute()
+    if not user_response.data or not user_response.data[0].get('premium'):
+        flash("Enroll in Jamliterate Premium to access Rapid Review!", "warning")
+        return redirect(url_for('subscription'))
     this_set_response = supabase.table('study_sets').select('*').eq('id', set_id).eq('user_id', user_id).execute()
     this_set = this_set_response.data[0] if this_set_response.data else None
     cards_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).execute()
@@ -429,7 +414,7 @@ def edit_card(set_id, card_id):
         this_card_response = supabase.table('flash_cards').select('*').eq('study_set_id', set_id).limit(1).execute()
     else:
         this_card_response = supabase.table('flash_cards').select('*').eq('id', card_id).eq('study_set_id', set_id).execute()
-        this_card = this_card_response.data[0] if this_card_response.data else None
+    this_card = this_card_response.data[0] if this_card_response.data else None
     if not this_card:
         flash('No card to edit.', 'error')
         return redirect(url_for('study_set', set_id=set_id))
@@ -471,6 +456,106 @@ def star_card(set_id, card_id):
     card['starred'] = not card.get('starred', False)
     supabase.table('flash_cards').update({'starred': card['starred']}).eq('id', card_id).execute()
     return jsonify({'success': True, 'starred': card['starred']})
+
+@app.route('/subscription')
+def subscription():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('home'))
+    user_response = supabase.table('users').select('*').eq('id', user_id).execute()
+    user = user_response.data[0] if user_response.data else None
+    return render_template('subscription.html', user=user)
+
+@app.route('/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+    plan = request.form.get('plan')
+    if plan not in ['monthly', 'yearly']:
+        return jsonify({"error": "Invalid plan selected"}), 400
+    # Set the trial period (e.g., 7 days)
+    trial_period_days = 7
+    # Set up Stripe checkout session
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price': 'price_1QC8i0Ln5pX9eqrS7gNSrQX4' if plan == 'monthly' else 'price_1QC8ifLn5pX9eqrSRx1yJICi',
+                'quantity': 1,
+            }],
+            mode='subscription',
+            subscription_data={
+                'trial_period_days': trial_period_days
+            },
+            success_url=url_for('subscription_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('subscription', _external=True),
+            client_reference_id=str(user_id)
+        )
+        return jsonify({"id": checkout_session.id})
+    except Exception as e:
+        return jsonify(error=str(e)), 403
+
+@app.route('/subscription/success')
+def subscription_success():
+    session_id = request.args.get('session_id')
+    if not session_id:
+        return redirect(url_for('dashboard'))
+    # Verify the session and update user's subscription status
+    try:
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
+        this_subscription = stripe.Subscription.retrieve(checkout_session.subscription)
+        user_id = int(checkout_session.client_reference_id)
+        # Extract the trial end timestamp (in Unix epoch format)
+        trial_end_timestamp = this_subscription.trial_end
+        stripe_subscription_id = this_subscription.id
+        if trial_end_timestamp:
+            # Convert the trial end timestamp to a readable date and time
+            trial_end_date = datetime.fromtimestamp(trial_end_timestamp, timezone.utc).strftime(
+                '%A, %B %d, %Y'
+            )
+            # Flash message to notify user about the trial period and billing date
+            flash(
+                f"Thank you for subscribing to Jamliterate Premium! Your free trial ends on {trial_end_date}.",
+                "info"
+            )
+        else:
+            flash("Subscription successful! You are now a premium member.", "success")
+        # Update user's subscription status in your database
+        supabase.table('users').update({
+            'premium': True,
+            'stripe_subscription_id': stripe_subscription_id
+        }).eq('id', user_id).execute()
+        return redirect(url_for('dashboard'))
+    except Exception:
+        flash("There was an error processing your subscription. Please contact support.", "error")
+        return redirect(url_for('dashboard'))
+
+@app.route('/cancel-subscription', methods=['POST'])
+def cancel_subscription():
+    print('cancel subscription attempted')
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('home'))
+    try:
+        print('trying to locate subscription id of user')
+        # Retrieve user info from Supabase to get their Stripe subscription ID
+        user_data = supabase.table('users').select('stripe_subscription_id').eq('id', user_id).single().execute()
+        if user_data.data is None or 'stripe_subscription_id' not in user_data.data:
+            print('no subscription id found')
+            flash("No subscription found to cancel.", "error")
+            return redirect(url_for('subscription'))
+        print('subscription id of user found')
+        stripe_subscription_id = user_data.data['stripe_subscription_id']
+        # Cancel the Stripe subscription immediately
+        stripe.Subscription.delete(stripe_subscription_id)
+        # Update the user's status in Supabase (remove premium flag)
+        supabase.table('users').update({'premium': False, 'stripe_subscription_id': None}).eq('id', user_id).execute()
+        flash('Your subscription has been canceled.', 'success')
+        return redirect(url_for('dashboard'))
+    except Exception:
+        flash('There was an error canceling your subscription. Please contact support.', 'error')
+        return redirect(url_for('dashboard'))
 # EDITS SHOULD ONLY BE MADE ABOVE THIS LINE, AND BELOW A SIMILAR LINE AT THE BEGINNING OF THIS FILE
 
 if __name__ == '__main__':
