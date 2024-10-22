@@ -10,7 +10,6 @@
     margin-top: 20px; /* Add some spacing at the top */
     padding: 0 20px; /* Optional: Add horizontal padding */
 }
-
 /* Customize the button */
 .btn {
     background-color: #51aab6;
@@ -23,11 +22,9 @@
     text-align: center;
     text-decoration: none;
 }
-
 .btn:hover {
     background-color: #007a8d;
 }
-
 /* Grid layout for study sets */
 .study-sets {
     display: grid;
@@ -36,7 +33,6 @@
     margin-top: 20px;
     padding: 20px;
 }
-
 /* Study set styling */
 .study-set {
     background-color: white;
@@ -50,14 +46,12 @@
     height: 150px;
     overflow: hidden;
 }
-
 .study-set h3 {
     margin: 0;
     color: #000;
     text-align: center;
     text-decoration: none;
 }
-
 .study-set-link {
     text-decoration: none;
     color: inherit;
@@ -65,13 +59,27 @@
     height: 100%;
     width: 100%;
 }
-
 .study-set:hover {
     transform: translateY(-5px);
 }
+.subscription-btn {
+    background-color: #ff4136;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    margin-left: 20px;
+    transition: background-color 0.3s ease;
+}
+.subscription-btn:hover {
+    background-color: #a70026;
+}
 </style>
 {% endblock %}
-
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
@@ -80,16 +88,16 @@
     {% endfor %}
 {% endif %}
 {% endwith %}
-
 <h1>Welcome, {{ user.name }}!</h1>
-
-<!-- Header with title and button aligned -->
 <div class="header-container">
     <h2>Your Jampacks</h2>
-    <a href="{{ url_for('jampack_generator') }}" class="btn">Jampack Generator</a>
+    <div>
+        <a href="{{ url_for('jampack_generator') }}" class="btn">Jampack Generator</a>
+        {% if not user.premium %}
+        <a href="{{ url_for('subscription') }}" class="subscription-btn">Upgrade to Premium</a>
+        {% endif %}
+    </div>
 </div>
-
-<!-- Study sets grid -->
 <div class="study-sets">
     {% for set in study_sets %}
     <a href="{{ url_for('study_set', set_id=set.id) }}" class="study-set-link">
@@ -99,7 +107,6 @@
     </a>
     {% endfor %}
 </div>
-
 <hr>
-<p>For support with technical difficulties, please <a href="mailto:craftsam28@gmail.com">email me</a>.</p>
+<p>For support with technical difficulties, please <a href="mailto:info@jamliterate.com">email us</a>.</p>
 {% endblock %}
